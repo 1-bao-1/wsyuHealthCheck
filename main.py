@@ -13,7 +13,7 @@ slowapi 的要提供的参数名必须是 request 和 response
 """
 from fastapi import FastAPI, Request
 from starlette.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
@@ -23,16 +23,24 @@ from app import InvalidRequestParamException, check_request_params, health_check
 
 app = FastAPI()
 
+
+def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(status_code=429, content={
+        'code': 429,
+        'message': '请求过于频繁'
+    })
+
+
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 
 @app.get('/')
 @limiter.limit("1/second")
 async def root(request: Request):
     return {
-        'message': '欢迎使用智慧首义打卡接口v1.0。访问 /check'
+        'message': '欢迎使用智慧首义打卡接口v1.0。访问 /check endpoint 获取更多信息。'
     }
 
 
@@ -49,7 +57,4 @@ async def invalid_request_param_handler(request: Request, exc: InvalidRequestPar
 async def check(request: Request, name: str = '', id: str = ''):
     check_request_params(name, id)
 
-    try:
-        return health_check(id, name)
-    except:
-        return 'error'
+    return health_check(id, name)
