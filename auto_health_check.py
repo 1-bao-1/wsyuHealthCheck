@@ -26,7 +26,7 @@ async def main():
 
         if succ:
             print(stu.name, '打卡成功')
-            Student.get(id=stu.id).update(last_check=datetime.utcnow())
+            await Student.get(id=stu.id).update(last_check=datetime.utcnow())
 
     await Tortoise.close_connections()
 
