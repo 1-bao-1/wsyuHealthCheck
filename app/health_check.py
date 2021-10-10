@@ -16,14 +16,13 @@ def get_uuid(username: str, password: str) -> str:
     :param: username 你的学号
     :param: password 你的名字
 
-    :return: uuid
+    :return: 请求到的数据
     """
     api = 'http://yqfk.wsyu.edu.cn:8089/appLogin/login'
     # 这个地方只能传 json 参数，不能传 data
-    result = requests.post(api, headers=DEFAULT_HEADERS, json=dict(
-        username=username, password=password)).json()
 
-    return result['data']['uuid']
+    return requests.post(api, headers=DEFAULT_HEADERS, json=dict(
+        username=username, password=password)).json()
 
 
 def get_userinfo(uuid: str) -> dict:
@@ -55,16 +54,15 @@ def add_health_state(uuid: str, addr: str = '', ansr: str = '') -> dict:
 
 
 def health_check(username: str, password: str, addr: str = ''):
-    try:
-        uuid = get_uuid(username, password)
-    except:
-        return {
-            'message': '用户名或密码错误。提示：用户名为你的姓名，密码为你的学号。'
-        }
+    rjson = get_uuid(username, password)
+
+    if rjson['code'] != '00':
+        return rjson
     # userinfo = get_userinfo(uuid)
     # hltSt == 2 && divSt == 0 表示没有打卡
     # hltSt == 1 && divSt == 1 表示打卡
 
+    uuid = rjson['data']['uuid']
     return add_health_state(uuid, addr=addr)
 
     """
