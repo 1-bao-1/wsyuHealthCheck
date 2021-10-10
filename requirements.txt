@@ -1,3 +1,6 @@
 requests
 fastapi
 slowapi
+pydantic
+pytz
+tortoise-orm

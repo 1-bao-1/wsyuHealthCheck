@@ -19,8 +19,8 @@ def get_uuid(username: str, password: str) -> str:
     :return: 请求到的数据
     """
     api = 'http://yqfk.wsyu.edu.cn:8089/appLogin/login'
-    # 这个地方只能传 json 参数，不能传 data
 
+    # 这个地方只能传 json 参数，不能传 data
     return requests.post(api, headers=DEFAULT_HEADERS, json=dict(
         username=username, password=password)).json()
 
@@ -54,23 +54,17 @@ def add_health_state(uuid: str, addr: str = '', ansr: str = '') -> dict:
 
 
 def health_check(username: str, password: str, addr: str = ''):
+    """打卡并返回结果
+
+    :return: (是否成功, 接口数据)"""
     rjson = get_uuid(username, password)
 
-    if rjson['code'] != '00':
-        return rjson
-    # userinfo = get_userinfo(uuid)
-    # hltSt == 2 && divSt == 0 表示没有打卡
-    # hltSt == 1 && divSt == 1 表示打卡
+    # code == 00 有两种可能：
+    # 1. 用户名或密码错误
+    # 2. 用户已经打过卡了
+    # 第二种情况会有个 data 字段。我们希望返回错误的情况是用户名或密码错误，因此下面需要加个判断
+    if rjson['code'] != '00' and 'data' not in rjson:
+        return False, rjson
 
     uuid = rjson['data']['uuid']
-    return add_health_state(uuid, addr=addr)
-
-    """
-    checked = (userinfo['data']['hltSt'] ==
-               '1' and userinfo['data']['divSt'] == '1')
-
-    print(f'{password} 是否已经打卡: {checked}')
-    # 打卡
-    if not checked:
-        print(password, add_health_state(uuid))
-    """
+    return True, add_health_state(uuid, addr=addr)
